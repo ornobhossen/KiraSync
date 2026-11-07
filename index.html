@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KiraSYCN — Dine Together. Pay Your Way.</title>
+<meta name="description" content="KiraSYCN is a universal QR-based restaurant ordering, smart bill-splitting and mobile payment platform for group dining.">
+<!-- Theme & Motion Enhancements: apply saved theme before first paint to avoid a flash -->
+<script>
+(function(){
+  try{
+    var saved = localStorage.getItem('kirasycn-theme');
+    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+  }catch(e){ document.documentElement.setAttribute('data-theme','dark'); }
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a href="#top" class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" width="30" height="30">
+          <path d="M8 4 L8 36 M8 20 L28 4 M8 20 L28 36" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="32" cy="20" r="3" fill="currentColor"/>
+        </svg>
+      </span>
+      <span class="brand__word">Kira<em>SYCN</em></span>
+    </a>
+    <nav class="nav__links" id="navLinks">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#diners">Who is this for?</a>
+      <a href="#dashboard-section">Dashboard</a>
+    </nav>
+    <div class="nav__cta">
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light and dark mode" aria-pressed="false">
+        <span class="theme-toggle__icon" id="themeToggleIcon" aria-hidden="true">🌙</span>
+        <span class="theme-toggle__label" id="themeToggleLabel">Dark Mode</span>
+      </button>
+      <a href="#dashboard-section" class="btn btn--ghost-sm">Restaurant Dashboard</a>
+      <a href="#demo" class="btn btn--solid-sm">Try the Demo</a>
+    </div>
+    <button class="nav__burger" id="navBurger" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="hero">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__inner">
+    <div class="hero__copy">
+      <p class="eyebrow-plain">Table-specific ordering &amp; payment</p>
+      <h1 class="hero__title">Dine together.<br><span class="hero__title-accent">Pay your way.</span></h1>
+      <p class="hero__sub">Every table gets its own QR code. Scan it, add your group, order freely, split what's shared, and each person pays only for what they had — straight from their phone.</p>
+      <div class="hero__actions">
+        <a href="#demo" class="btn btn--solid">Try the Interactive Demo</a>
+        <a href="#how" class="btn btn--ghost">Explore How It Works</a>
+      </div>
+      <div class="hero__stats">
+        <div><strong>08</strong><span>Payment methods</span></div>
+        <div><strong>1</strong><span>QR per table</span></div>
+        <div><strong>&lt;60s</strong><span>Scan to order</span></div>
+      </div>
+    </div>
+
+    <div class="hero__scene" aria-hidden="true">
+      <div class="scene-parallax" data-parallax-speed="0.5">
+        <div class="scene-card scene-card--table">
+          <div class="scene-card__label">TABLE 05</div>
+          <div class="scene-card__sub">Kira Bistro</div>
+          <div class="qr-mock">
+            <svg viewBox="0 0 100 100" width="100%" height="100%"><rect width="100" height="100" fill="none"/>
+              <g fill="currentColor">
+                <rect x="6" y="6" width="24" height="24"/><rect x="12" y="12" width="12" height="12" fill="#0A0C10"/>
+                <rect x="70" y="6" width="24" height="24"/><rect x="76" y="12" width="12" height="12" fill="#0A0C10"/>
+                <rect x="6" y="70" width="24" height="24"/><rect x="12" y="76" width="12" height="12" fill="#0A0C10"/>
+                <rect x="40" y="6" width="6" height="6"/><rect x="52" y="6" width="6" height="6"/><rect x="40" y="18" width="6" height="6"/>
+                <rect x="40" y="40" width="6" height="6"/><rect x="52" y="40" width="6" height="6"/><rect x="64" y="40" width="6" height="6"/>
+                <rect x="40" y="52" width="6" height="6"/><rect x="82" y="52" width="6" height="6"/><rect x="40" y="64" width="6" height="6"/>
+                <rect x="52" y="64" width="6" height="6"/><rect x="64" y="64" width="6" height="6"/><rect x="82" y="64" width="6" height="6"/>
+                <rect x="52" y="76" width="6" height="6"/><rect x="64" y="82" width="6" height="6"/><rect x="82" y="82" width="6" height="6"/>
+              </g>
+            </svg>
+          </div>
+          <div class="scene-card__hint">Scan to start ordering</div>
+        </div>
+      </div>
+
+      <div class="scene-parallax" data-parallax-speed="0.9">
+        <div class="scene-card scene-card--phone">
+          <div class="phone-frame">
+            <div class="phone-frame__notch"></div>
+            <div class="phone-frame__screen" id="heroPhoneScreen">
+              <!-- populated by JS rotation -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scene-parallax" data-parallax-speed="0.7">
+        <div class="scene-card scene-card--receipt">
+          <div class="receipt-mini">
+            <div class="receipt-mini__row"><span>Payment successful</span></div>
+            <div class="receipt-mini__amt">RM 28.67</div>
+            <div class="receipt-mini__sub">KSY-2026-48213 · Paid</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROBLEM ============ -->
+<section class="section section--dark" id="problem">
+  <div class="section__inner">
+    <p class="eyebrow-plain">The problem</p>
+    <h2 class="section__title">Dining together should be enjoyable.<br>Splitting the bill should not be complicated.</h2>
+    <div class="problem-grid">
+      <article class="problem-card">
+        <div class="problem-card__icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v12H8l-4 4V4z"/><path d="M8 9h8M8 12h5"/></svg>
+        </div>
+        <h3>A paper bill, five phones out</h3>
+        <p>Someone always ends up doing the maths on a napkin while the table goes cold.</p>
+      </article>
+      <article class="problem-card">
+        <div class="problem-card__icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </div>
+        <h3>Waiting at the counter</h3>
+        <p>The meal is over, but the queue for the register is only just beginning.</p>
+      </article>
+      <article class="problem-card">
+        <div class="problem-card__icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        </div>
+        <h3>Who ordered what, again?</h3>
+        <p>Shared starters and mystery drinks make it nearly impossible to remember whose is whose.</p>
+      </article>
+      <article class="problem-card">
+        <div class="problem-card__icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h18M15 6l6 6-6 6"/></svg>
+        </div>
+        <h3>One person pays, everyone owes</h3>
+        <p>Then come the transfers, the reminders, and the friend who "will pay you back."</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SOLUTION ============ -->
+<section class="section section--bright" id="solution">
+  <div class="section__inner">
+    <p class="eyebrow-plain">The KiraSYCN solution</p>
+    <h2 class="section__title section__title--dark">One QR code. One shared session. Everyone pays only for their own.</h2>
+    <p class="section__lead">KiraSYCN connects the table, the order, the bill, and the payment into a single live session — so nothing has to be reconstructed by hand at the end of the meal.</p>
+
+    <div class="flow" id="solutionFlow">
+      <div class="flow__step"><span>Table QR</span></div>
+      <div class="flow__arrow"></div>
+      <div class="flow__step"><span>Group session</span></div>
+      <div class="flow__arrow"></div>
+      <div class="flow__step"><span>Individual &amp; shared orders</span></div>
+      <div class="flow__arrow"></div>
+      <div class="flow__step"><span>Smart bill split</span></div>
+      <div class="flow__arrow"></div>
+      <div class="flow__step"><span>Mobile payment</span></div>
+      <div class="flow__arrow"></div>
+      <div class="flow__step"><span>Digital receipt</span></div>
+      <div class="flow__arrow"></div>
+      <div class="flow__step flow__step--accent"><span>Restaurant dashboard</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="section section--dark" id="how">
+  <div class="section__inner">
+    <p class="eyebrow-plain">How it works</p>
+    <h2 class="section__title">From sitting down to walking out, in eight steps.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step__num">01</div>
+        <h3>Scan</h3>
+        <p>Each table carries its own QR code. Scanning it identifies the restaurant, the table, and opens a live dining session automatically.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">02</div>
+        <h3>Add people</h3>
+        <p>The first person names the group. Add, rename, or remove anyone at any point before the bill is settled.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">03</div>
+        <h3>Order</h3>
+        <p>Browse the full menu together, in any order. Pick an item, and decide who it belongs to right away.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">04</div>
+        <h3>Assign food</h3>
+        <p>Individual items go to one person. Shared items get split only between the people actually sharing them.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">05</div>
+        <h3>Share items</h3>
+        <p>Select exactly who's sharing a dish — not the whole table by default — and watch the per-person cost divide instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">06</div>
+        <h3>Review</h3>
+        <p>See each person's bill broken down by item, and the table total, before anyone commits to paying.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">07</div>
+        <h3>Pay</h3>
+        <p>Pay individually, or one person can settle the full outstanding balance — already-paid amounts are never charged twice.</p>
+      </div>
+      <div class="step">
+        <div class="step__num">08</div>
+        <h3>Receipt</h3>
+        <p>A digital receipt lands instantly, with the transaction ID, items, and amount — ready to show staff if ever needed.</p>
+      </div>
+    </div>
+
+    <div class="how__cta">
+      <a href="#demo" class="btn btn--solid">Try the Interactive Demo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES: SMART ORDERING / SPLIT / PAYMENT / RECEIPTS ============ -->
+<section class="section section--bright" id="features">
+  <div class="section__inner">
+    <p class="eyebrow-plain">Built for how people actually eat together</p>
+    <h2 class="section__title section__title--dark">Four systems, working as one.</h2>
+
+    <div class="feature-rows">
+      <article class="feature-row">
+        <div class="feature-row__text">
+          <h3>Smart ordering</h3>
+          <p>Tap a dish, and KiraSYCN asks one question: individual, or shared? No forms, no waiting for one person to finish their whole order before the next begins — the group orders freely, in any sequence.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div class="glass-panel">
+            <div class="mini-item"><span>Large Pizza</span><strong>RM 32.00</strong></div>
+            <div class="mini-choice"><button class="mini-choice__btn mini-choice__btn--active">👤 Individual</button><button class="mini-choice__btn">👥 Shared</button></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="feature-row feature-row--reverse">
+        <div class="feature-row__text">
+          <h3>Smart split billing</h3>
+          <p>Choose exactly who's sharing a dish, and the price divides itself — with rounding handled sensibly, down to the cent, no matter how the group changes mid-meal.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div class="glass-panel">
+            <div class="mini-item"><span>Large Pizza — shared by 3</span><strong>RM 32.00</strong></div>
+            <div class="mini-avatars"><span>M</span><span>J</span><span>S</span></div>
+            <div class="mini-result">RM 10.67 <em>each</em></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="feature-row">
+        <div class="feature-row__text">
+          <h3>Mobile payment</h3>
+          <p>Pay only your own total the moment you're ready, or let one person clear the whole table. Either way, KiraSYCN tracks who's paid and what's still outstanding — in real time.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div class="glass-panel">
+            <div class="mini-pay-row"><span>Mano</span><em class="status status--paid">Paid</em></div>
+            <div class="mini-pay-row"><span>John</span><em class="status status--pending">Pending</em></div>
+            <div class="mini-pay-row"><span>Sarah</span><em class="status status--paid">Paid</em></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="feature-row feature-row--reverse">
+        <div class="feature-row__text">
+          <h3>Digital receipts</h3>
+          <p>Every payment — individual or full-table — generates its own receipt instantly, with a transaction ID, timestamp, and full item breakdown, ready to save or show staff.</p>
+        </div>
+        <div class="feature-row__visual">
+          <div class="glass-panel receipt-preview">
+            <div class="receipt-preview__ok">✓</div>
+            <div>Payment successful</div>
+            <strong>RM 28.67</strong>
+            <span>KSY-2026-48213</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INTERACTIVE DEMO ============ -->
+<section class="section section--dark demo-section" id="demo">
+  <div class="section__inner">
+    <p class="eyebrow-plain">Interactive product demo</p>
+    <h2 class="section__title">Scan a table. Run the whole session yourself.</h2>
+    <p class="section__lead section__lead--light">This is a live, self-contained simulation of the KiraSYCN customer journey — every calculation and payment status below is real, no financial transactions are made.</p>
+
+    <div class="demo-shell" id="demoShell">
+
+      <div class="demo-progress" id="demoProgress">
+        <div class="demo-progress__step" data-step="scan">Scan</div>
+        <div class="demo-progress__step" data-step="people">People</div>
+        <div class="demo-progress__step" data-step="menu">Menu</div>
+        <div class="demo-progress__step" data-step="review">Review</div>
+        <div class="demo-progress__step" data-step="payment">Payment</div>
+        <div class="demo-progress__step" data-step="receipt">Receipt</div>
+      </div>
+
+      <div class="demo-phone">
+        <div class="demo-phone__frame">
+          <div class="demo-phone__notch"></div>
+          <div class="demo-phone__screen" id="demoScreen">
+            <!-- rendered by script.js -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ BENEFITS ============ -->
+<section class="section section--bright" id="diners">
+  <div class="section__inner">
+    <div class="benefits-cols">
+      <div class="benefits-col">
+        <p class="eyebrow-plain">For diners</p>
+        <h2 class="section__title section__title--dark section__title--sm">Pay for exactly what you had.</h2>
+        <ul class="benefits-list">
+          <li>No complicated maths at the end of the meal</li>
+          <li>No waiting in line at the counter</li>
+          <li>Only pay for what you actually ordered</li>
+          <li>Split shared dishes without the awkward conversation</li>
+          <li>Pay from your phone, however suits you</li>
+          <li>Get your receipt the second you pay</li>
+        </ul>
+      </div>
+      <div class="benefits-col" id="restaurants">
+        <p class="eyebrow-plain">For restaurants</p>
+        <h2 class="section__title section__title--dark section__title--sm">Turn tables faster, with clearer records.</h2>
+        <ul class="benefits-list">
+          <li>Faster payment at busy periods</li>
+          <li>Live visibility into every table's status</li>
+          <li>Clear, per-customer payment tracking</li>
+          <li>Digital records for every transaction</li>
+          <li>Fewer billing disputes at the counter</li>
+          <li>A calmer front-of-house, even on a full night</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESTAURANT DASHBOARD ============ -->
+<section class="section section--dark" id="dashboard-section">
+  <div class="section__inner">
+    <p class="eyebrow-plain">For restaurants</p>
+    <h2 class="section__title">The dashboard behind the dining room.</h2>
+    <p class="section__lead section__lead--light">Every scan, order, and payment in the demo above updates here — in real time, exactly as it would for restaurant staff.</p>
+
+    <div class="dashboard" id="dashboard">
+      <div class="dashboard__top">
+        <div class="dstat"><span>Active tables</span><strong id="statActiveTables">0</strong></div>
+        <div class="dstat"><span>Guests seated</span><strong id="statGuests">0</strong></div>
+        <div class="dstat"><span>Orders placed</span><strong id="statOrders">0</strong></div>
+        <div class="dstat"><span>Collected</span><strong id="statPaid">RM 0.00</strong></div>
+        <div class="dstat"><span>Outstanding</span><strong id="statOutstanding">RM 0.00</strong></div>
+      </div>
+
+      <div class="dashboard__body">
+        <div class="dashboard__tables">
+          <h3>Tables</h3>
+          <div id="tableList" class="table-list"></div>
+        </div>
+        <div class="dashboard__detail" id="tableDetail">
+          <h3>Table detail</h3>
+          <p class="dashboard__empty">Start the demo above to see a live table appear here.</p>
+        </div>
+      </div>
+
+      <div class="dashboard__transactions">
+        <h3>Recent transactions</h3>
+        <table class="tx-table">
+          <thead><tr><th>Customer</th><th>Table</th><th>Amount</th><th>Method</th><th>Status</th><th>Reference</th></tr></thead>
+          <tbody id="txTableBody">
+            <tr><td colspan="6" class="dashboard__empty">No transactions yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECURITY ============ -->
+<section class="section section--bright" id="security">
+  <div class="section__inner">
+    <p class="eyebrow-plain">Security &amp; trust</p>
+    <h2 class="section__title section__title--dark section__title--sm">Every session, order, and payment is tracked end to end.</h2>
+    <div class="security-grid">
+      <div class="security-card">
+        <h3>Session-scoped</h3>
+        <p>Each table's QR opens its own isolated session — no crossover between tables or orders.</p>
+      </div>
+      <div class="security-card">
+        <h3>Transaction records</h3>
+        <p>Every payment, individual or full-table, is logged with a unique reference and timestamp.</p>
+      </div>
+      <div class="security-card">
+        <h3>Live synchronization</h3>
+        <p>Customer-side payment status and the restaurant dashboard stay in step with each other throughout the session.</p>
+      </div>
+      <div class="security-card">
+        <h3>Clear confirmation</h3>
+        <p>Every successful payment produces an explicit, checkable confirmation — never an ambiguous state.</p>
+      </div>
+    </div>
+    <p class="security-note">This is a demonstration prototype. No real payment processing is performed unless a live payment backend is connected.</p>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="cta-final">
+  <div class="cta-final__inner">
+    <h2>Ready to experience smarter dining?</h2>
+    <p>Scan the table. Add your friends. Pay your way.</p>
+    <a href="restaurant" class="btn btn--solid">Try it for yourself now!</a>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__brand">
+      <span class="brand__word brand__word--footer">Kira<em>SYCN</em></span>
+      <p>Dine together. Pay your way.</p>
+    </div>
+    <div class="footer__cols">
+      <div>
+        <h4>Product</h4>
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#demo">Interactive demo</a>
+      </div>
+      <div>
+        <h4>Platform</h4>
+        <a href="#diners">For diners</a>
+        <a href="#restaurants">For restaurants</a>
+        <a href="#dashboard-section">Restaurant dashboard</a>
+      </div>
+      <div>
+        <h4>Trust</h4>
+        <a href="#security">Security</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <span>© 2026 KiraSYCN. Prototype demonstration — no real payments are processed.</span>
+  </div>
+</footer>
+
+<!-- toast for simulated events -->
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

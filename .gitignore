@@ -1,0 +1,15 @@
+# Local Firebase credentials/config (never commit)
+firebase-config.js
+
+# Firebase CLI deploy cache
+.firebase/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Logs
+*.log

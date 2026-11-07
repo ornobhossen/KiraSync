@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KiraSYCN | Restaurant</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body style="background-color: var(--bg-color, #050608);">
+
+    <div class="no-print">
+        <header class="animate-slide-up" style="padding: 20px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); transition: background-color 0.3s;">
+            
+            <!-- NEW LOGO AND TITLE CONTAINER -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="logo.png" alt="KiraSYCN Logo" style="height: 36px; width: auto; object-fit: contain;">
+                <h1 style="color: var(--accent-brass); margin: 0; letter-spacing: -0.5px;">KiraSYCN</h1>
+            </div>
+
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button class="btn btn-outline" id="themeToggleBtn" style="padding: 8px 12px; font-size: 16px; border-radius: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;" title="Toggle Theme">☀️</button>
+                <button class="btn btn-outline" id="openQrPanelBtn" style="padding: 8px 16px;">Generate QR Standees</button>
+            </div>
+        </header>
+
+
+        <!-- LIVE METRICS PANEL with Staggered Slide-Up -->
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; padding: 20px;">
+            <div class="glass-panel animate-slide-up delay-1">
+                <p class="text-muted">Active Tables</p>
+                <h2 id="metric-tables" class="metric-value">0</h2>
+            </div>
+            <div class="glass-panel animate-slide-up delay-2">
+                <p class="text-muted">Total Guests</p>
+                <h2 id="metric-guests" class="metric-value">0</h2>
+            </div>
+            <div class="glass-panel animate-slide-up delay-3">
+                <p class="text-muted">Orders Placed</p>
+                <h2 id="metric-orders" class="metric-value">0</h2>
+            </div>
+            <div class="glass-panel animate-slide-up delay-4">
+                <p class="text-muted">Total Revenue</p>
+                <h2 id="metric-revenue" class="metric-value">RM 0.00</h2>
+            </div>
+            <div class="glass-panel animate-slide-up delay-5">
+                <p class="text-muted">Collected</p>
+                <h2 id="metric-collected" class="metric-value" style="color: var(--success);">RM 0.00</h2>
+            </div>
+        </div>
+
+        <h3 class="animate-slide-up delay-5" style="padding: 0 20px;">Live Floor Plan</h3>
+        <p class="text-muted animate-slide-up delay-5" style="padding: 0 20px; font-size: 14px;">Click any active table to view order and payment details.</p>
+        <div class="dashboard-grid" id="floorPlan">
+            <!-- Tables load here dynamically from Firebase -->
+        </div>
+
+        <h3 class="animate-slide-up delay-5" style="padding: 20px 20px 0;">Today's Recent Transactions</h3>
+        <div id="transactionsList" class="animate-slide-up delay-5" style="padding: 20px; display: flex; flex-direction: column; gap: 10px; max-width: 800px;">
+            <!-- Transactions load here -->
+        </div>
+    </div>
+
+    <!-- QR GENERATOR & PRINT LAYOUT -->
+    <div class="print-only" id="printLayout">
+        <div class="qr-standee-card">
+            <h1>Table <span id="printTableNum">01</span></h1>
+            <p>Scan to Order & Pay</p>
+            <div id="qrContainer" style="margin: 20px 0; display: flex; justify-content: center;"></div>
+            <p style="margin-top: 10px; font-family: var(--font-serif); font-size: 20px;">KiraBistro</p>
+        </div>
+    </div>
+
+    <!-- QR Configurator Modal -->
+    <div class="sheet-overlay no-print" id="qrOverlay"></div>
+    <div class="bottom-sheet no-print" id="qrSheet" style="background: var(--bg-color); border: 1px solid var(--border-light);">
+        <h2>Table QR Generator</h2>
+        <p class="text-muted" style="margin-bottom: 20px;">Configure and print permanent table standees.</p>
+        <label style="display:block; margin-bottom: 10px;">Target Table Number</label>
+        <input type="number" id="qrTableInput" value="1" style="width:100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.1); color: white; margin-bottom: 20px; font-size:16px;">
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-outline" id="closeQrBtn">Cancel</button>
+            <button class="btn btn-primary" id="printQrBtn">Print Standee</button>
+        </div>
+    </div>
+
+    <!-- TABLE DETAILS INSPECTOR MODAL -->
+    <div class="sheet-overlay no-print" id="detailOverlay"></div>
+    <div class="bottom-sheet no-print" id="detailSheet" style="background: var(--bg-color); border: 1px solid var(--border-light); max-height: 85vh; overflow-y: auto;">
+        <div class="flex-between" style="margin-bottom: 20px;">
+            <h2 id="detailTableTitle">Table Details</h2>
+            <button class="btn btn-outline" id="closeDetailBtn" style="width: auto; padding: 6px 12px; font-size: 13px;">Close</button>
+        </div>
+        <div id="detailContent"></div>
+    </div>
+
+    <script type="module">
+        import { resetTable, listenToAllTables, listenToDailyMetrics, bankTableRevenue } from './firebase-sync.js';
+
+        const RESTAURANT_NAME = 'KiraBistro';
+        const BASE_URL = 'https://kirasynchro.web.app/diner';
+        let globalTablesState = {};
+
+        /* ==========================================================================
+           ANIMATION UTILITY: Triggers a pulse effect when a metric updates
+           ========================================================================== */
+        function animateMetric(elementId, newValue) {
+            const el = document.getElementById(elementId);
+            if (el.innerText !== String(newValue)) {
+                el.classList.remove('updated');
+                void el.offsetWidth; // Trigger DOM reflow to restart animation
+                el.innerText = newValue;
+                el.classList.add('updated');
+            }
+        }
+
+        /* ==========================================================================
+           THEME ENGINE
+           ========================================================================== */
+        const themeBtn = document.getElementById('themeToggleBtn');
+        const body = document.body;
+
+        if (localStorage.getItem('kiraTheme') === 'light') {
+            body.classList.add('light-theme');
+            themeBtn.innerText = '🌙';
+        }
+
+        themeBtn.addEventListener('click', () => {
+            body.classList.toggle('light-theme');
+            const isLight = body.classList.contains('light-theme');
+            localStorage.setItem('kiraTheme', isLight ? 'light' : 'dark');
+            themeBtn.innerText = isLight ? '🌙' : '☀️';
+        });
+
+        /* ==========================================================================
+           DAILY METRICS & TRANSACTIONS LISTENER
+           ========================================================================== */
+        listenToDailyMetrics((collectedAmount, transactions) => {
+            animateMetric('metric-collected', `RM ${collectedAmount.toFixed(2)}`);
+            
+            const txList = document.getElementById('transactionsList');
+            if (!transactions || transactions.length === 0) {
+                txList.innerHTML = `<p class="text-muted">No transactions recorded yet today.</p>`;
+                return;
+            }
+
+            const sortedTx = [...transactions].reverse();
+            let html = '';
+            
+            sortedTx.forEach((tx, index) => {
+                // Apply subtle delay to transaction list items so they cascade in
+                const delay = Math.min(index + 1, 5);
+                html += `
+                    <div class="glass-panel flex-between animate-slide-up delay-${delay}" style="padding: 15px;">
+                        <div>
+                            <div style="font-weight: 500; font-size: 16px;">Table ${tx.tableId} Settled</div>
+                            <div style="font-size: 12px; margin-top: 4px;" class="text-muted">${tx.time} • Ref: ${tx.id}</div>
+                        </div>
+                        <div style="color: var(--success); font-weight: 600; font-size: 18px;">+ RM ${tx.amount.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            txList.innerHTML = html;
+        });
+
+        /* ==========================================================================
+           DASHBOARD STATE & METRICS CALCULATION
+           ========================================================================== */
+        listenToAllTables((tables) => {
+            globalTablesState = tables;
+            let activeCount = 0, guestCount = 0, orderCount = 0, revenue = 0;
+            const grid = document.getElementById('floorPlan');
+            
+            // Keep current HTML to prevent completely wiping the grid and ruining animations unless empty
+            let newHtml = '';
+
+            if (Object.keys(tables).length === 0) {
+                grid.innerHTML = `<p class="text-muted animate-slide-up delay-5" style="padding: 20px;">No active tables found. Open a diner session to populate data.</p>`;
+                animateMetric('metric-tables', '0');
+                animateMetric('metric-guests', '0');
+                animateMetric('metric-orders', '0');
+                animateMetric('metric-revenue', 'RM 0.00');
+                return;
+            }
+
+            // Stagger counter for table cards
+            let cardIndex = 1;
+
+            for (const [tableId, data] of Object.entries(tables)) {
+                if (data.status === 'Available') continue;
+
+                if (data.status !== 'Fully Paid') activeCount++;
+                const diners = data.diners || [];
+                const orders = data.orders || [];
+                guestCount += diners.length;
+                orderCount += orders.length;
+
+                let tableTotal = 0;
+                orders.forEach(o => tableTotal += o.price);
+                
+                const taxAndSc = tableTotal * 0.06;
+                const grandTotal = tableTotal + taxAndSc;
+                
+                if (data.status === 'Fully Paid') revenue += grandTotal;
+
+                let statusColor = data.status === 'Fully Paid' ? 'var(--success)' :
+                                  data.status === 'Ordering' ? '#FF9500' : 'var(--text-main)';
+                
+                const animDelay = Math.min(cardIndex + 5, 5); // caps delay class at delay-5
+                
+                newHtml += `
+                    <div class="glass-panel table-card-hover animate-slide-up delay-${animDelay}" data-table-id="${tableId}" style="border-top: 3px solid ${statusColor}; cursor: pointer;">
+                        <div class="flex-between" style="margin-bottom:15px;">
+                            <h3 style="margin:0;">Table ${tableId}</h3>
+                            <span class="badge" style="background: var(--bg-color); border: 1px solid var(--border-light);">${data.status || 'Active'}</span>
+                        </div>
+                        <div class="flex-between text-muted" style="margin-bottom: 5px;">
+                            <span>Guests: ${diners.length}</span>
+                            <span>Orders: ${orders.length}</span>
+                        </div>
+                        <div class="flex-between" style="margin-bottom: 15px;">
+                            <span class="text-muted">Est. Total:</span>
+                            <strong style="color:var(--accent-brass);">RM ${grandTotal.toFixed(2)}</strong>
+                        </div>
+                        <button class="btn btn-outline reset-table-btn" data-table="${tableId}" style="padding: 8px; font-size: 13px; width: 100%;">Reset Table for Next Group</button>
+                    </div>
+                `;
+                cardIndex++;
+            }
+
+            grid.innerHTML = newHtml;
+
+            // Route metrics through the animation function
+            animateMetric('metric-tables', activeCount);
+            animateMetric('metric-guests', guestCount);
+            animateMetric('metric-orders', orderCount);
+            animateMetric('metric-revenue', `RM ${revenue.toFixed(2)}`);
+        });
+
+        /* ==========================================================================
+           TABLE CLICK DELEGATION
+           ========================================================================== */
+        document.getElementById('floorPlan').addEventListener('click', async (e) => {
+            if (e.target.classList.contains('reset-table-btn')) {
+                const tableId = e.target.getAttribute('data-table');
+                if (confirm(`Are you sure you want to clear Table ${tableId} for a new group?`)) {
+                    const data = globalTablesState[tableId];
+                    if (data && data.status === 'Fully Paid') {
+                        let tableTotal = 0;
+                        if (data.orders) {
+                            data.orders.forEach(o => tableTotal += o.price);
+                        }
+                        const grandTotal = tableTotal + (tableTotal * 0.06);
+                        await bankTableRevenue(tableId, grandTotal);
+                    }
+                    await resetTable(tableId);
+                }
+                return;
+            }
+
+            const card = e.target.closest('.glass-panel');
+            if (card) {
+                const tableId = card.getAttribute('data-table-id');
+                if (tableId) openTableDetails(tableId);
+            }
+        });
+
+        /* ==========================================================================
+           DETAIL INSPECTOR UI LOGIC
+           ========================================================================== */
+        const detailOverlay = document.getElementById('detailOverlay');
+        const detailSheet = document.getElementById('detailSheet');
+
+        function openTableDetails(tableId) {
+            const data = globalTablesState[tableId];
+            if (!data) return;
+
+            document.getElementById('detailTableTitle').innerText = `Table ${tableId} Details`;
+            let html = `<div style="margin-bottom: 25px;"><h3 style="color: var(--accent-brass); margin-bottom: 15px; font-size: 18px;">Guest Payment Status</h3>`;
+            
+            if (data.diners && data.diners.length > 0) {
+                data.diners.forEach(d => {
+                    html += `
+                        <div class="flex-between" style="margin-bottom: 10px; background: var(--bg-color); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                            <div>
+                                <div style="font-weight: 500; font-size: 15px; color: var(--text-main);">${d.name}</div>
+                                ${d.hasPaid ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Ref: ${d.paymentRef}</div>` : ``}
+                            </div>
+                            <div style="text-align:right;">
+                                ${d.hasPaid ? `<span class="badge paid" style="font-size: 10px;">PAID via ${d.paymentMethod}</span>` : `<span class="badge pending" style="color:#FF9500; font-size: 10px;">PENDING</span>`}
+                                ${d.finalTotal ? `<div style="margin-top: 6px; color: var(--text-main); font-weight: 600;">RM ${d.finalTotal.toFixed(2)}</div>` : ``}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<p class="text-muted">No guests seated.</p>`;
+            }
+
+            html += `</div><div><h3 style="color: var(--accent-brass); margin-bottom: 15px; font-size: 18px;">Ordered Items</h3>`;
+
+            if (data.orders && data.orders.length > 0) {
+                data.orders.forEach(o => {
+                    const sharedNames = o.sharedBy.map(dId => {
+                        const diner = data.diners.find(d => d.id === dId);
+                        return diner ? diner.name : 'Unknown';
+                    }).join(', ');
+
+                    html += `
+                        <div class="flex-between text-muted" style="margin-bottom: 10px; font-size: 14px; background: var(--bg-color); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                            <div>
+                                <div style="color: var(--text-main); font-weight: 500;">${o.name}</div>
+                                <div style="font-size: 12px; margin-top: 4px;">Shared by: ${sharedNames}</div>
+                            </div>
+                            <div style="color: var(--text-main); font-weight: 500;">RM ${o.price.toFixed(2)}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<p class="text-muted">No items ordered yet.</p>`;
+            }
+
+            html += `</div>`;
+            document.getElementById('detailContent').innerHTML = html;
+            
+            detailOverlay.classList.add('active');
+            detailSheet.classList.add('active');
+        }
+
+        document.getElementById('closeDetailBtn').addEventListener('click', () => {
+            detailOverlay.classList.remove('active');
+            detailSheet.classList.remove('active');
+        });
+        detailOverlay.addEventListener('click', () => {
+            detailOverlay.classList.remove('active');
+            detailSheet.classList.remove('active');
+        });
+
+        /* ==========================================================================
+           QR GENERATOR ENGINE
+           ========================================================================== */
+        const qrOverlay = document.getElementById('qrOverlay');
+        const qrSheet = document.getElementById('qrSheet');
+
+        document.getElementById('openQrPanelBtn').addEventListener('click', () => {
+            qrOverlay.classList.add('active');
+            qrSheet.classList.add('active');
+        });
+        document.getElementById('closeQrBtn').addEventListener('click', () => {
+            qrOverlay.classList.remove('active');
+            qrSheet.classList.remove('active');
+        });
+        qrOverlay.addEventListener('click', () => {
+            qrOverlay.classList.remove('active');
+            qrSheet.classList.remove('active');
+        });
+        document.getElementById('printQrBtn').addEventListener('click', () => {
+            const rawVal = document.getElementById('qrTableInput').value || '1';
+            const tableNum = String(rawVal).padStart(2, '0');
+            const targetUrl = `${BASE_URL}?restaurant=${RESTAURANT_NAME}&table=${tableNum}`;
+            
+            document.getElementById('printTableNum').innerText = tableNum;
+            const container = document.getElementById('qrContainer');
+            container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(targetUrl)}" alt="Table QR Code" style="width:220px; height:220px; border-radius:12px; background:#fff; padding:10px;">`;
+            
+            qrOverlay.classList.remove('active');
+            qrSheet.classList.remove('active');
+            setTimeout(() => { window.print(); }, 400);
+        });
+    </script>
+</body>
+</html>

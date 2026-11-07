@@ -1,0 +1,146 @@
+rules_version = '2';
+
+// ============================================================================
+// KiraSync Firestore Security Rules
+// ----------------------------------------------------------------------------
+// Principles:
+//   1. Everything is denied by default.
+//   2. Every read/write requires an authenticated (anonymous) session.
+//   3. Documents may only contain the fields the app actually uses.
+//   4. Values are type-checked and length-limited to prevent abuse.
+//   5. Unknown collections are unreachable.
+//
+// IMPORTANT: enable the Anonymous provider in
+// Firebase Console > Authentication > Sign-in method.
+// ============================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function validId(id) {
+      return id is string && id.matches('^[A-Za-z0-9_-]{1,128}$');
+    }
+
+    function validText(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength;
+    }
+
+    // Optional-field checks are written inline so that a missing field is
+    // never evaluated (rules short-circuit on ||).
+
+    // ------------------------------------------------------------------------
+    // tables/{tableId}
+    // ------------------------------------------------------------------------
+    match /tables/{tableId} {
+      allow read: if signedIn();
+
+      allow create, update: if signedIn()
+        && validId(tableId)
+        && request.resource.data.keys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status in [
+             'Available', 'Ordering', 'Seated', 'Payment Pending', 'Fully Paid', 'Paid', 'Cleaning'
+           ]
+        && request.resource.data.updatedAt is string
+        && request.resource.data.updatedAt.size() <= 40;
+
+      // Tables are never deleted by the app.
+      allow delete: if false;
+
+      // ----------------------------------------------------------------------
+      // tables/{tableId}/diners/{dinerId}
+      // ----------------------------------------------------------------------
+      match /diners/{dinerId} {
+        allow read: if signedIn();
+
+        allow create, update: if signedIn()
+          && validId(dinerId)
+          && request.resource.data.keys().hasOnly([
+               'id', 'name', 'initial', 'hasPaid', 'tableId',
+               'updatedAt', 'finalTotal', 'paymentMethod', 'paymentRef'
+             ])
+          && request.resource.data.id == dinerId
+          && request.resource.data.tableId == tableId
+          && validText(request.resource.data.name, 80)
+          && request.resource.data.initial is string
+          && request.resource.data.initial.size() <= 4
+          && (!request.resource.data.keys().hasAny(['hasPaid'])
+              || request.resource.data.hasPaid is bool)
+          && (!request.resource.data.keys().hasAny(['updatedAt'])
+              || (request.resource.data.updatedAt is string
+                  && request.resource.data.updatedAt.size() <= 40))
+          && (!request.resource.data.keys().hasAny(['finalTotal'])
+              || (request.resource.data.finalTotal is number
+                  && request.resource.data.finalTotal >= 0
+                  && request.resource.data.finalTotal <= 1000000))
+          && (!request.resource.data.keys().hasAny(['paymentMethod'])
+              || (request.resource.data.paymentMethod is string
+                  && request.resource.data.paymentMethod.size() <= 20))
+          && (!request.resource.data.keys().hasAny(['paymentRef'])
+              || (request.resource.data.paymentRef is string
+                  && request.resource.data.paymentRef.size() <= 40));
+
+        // resetTable() clears diners between groups.
+        allow delete: if signedIn();
+      }
+
+      // ----------------------------------------------------------------------
+      // tables/{tableId}/orders/{orderId}
+      // ----------------------------------------------------------------------
+      match /orders/{orderId} {
+        allow read: if signedIn();
+
+        allow create, update: if signedIn()
+          && validId(orderId)
+          && request.resource.data.keys().hasOnly([
+               'id', 'itemId', 'name', 'price', 'sharedBy', 'status', 'tableId'
+             ])
+          && request.resource.data.id == orderId
+          && request.resource.data.tableId == tableId
+          && validText(request.resource.data.itemId, 128)
+          && validText(request.resource.data.name, 120)
+          && request.resource.data.price is number
+          && request.resource.data.price >= 0
+          && request.resource.data.price <= 100000
+          && request.resource.data.sharedBy is list
+          && request.resource.data.sharedBy.size() > 0
+          && request.resource.data.sharedBy.size() <= 50
+          && request.resource.data.status in ['Pending', 'Preparing', 'Served', 'Cancelled', 'Paid'];
+
+        // resetTable() clears orders between groups.
+        allow delete: if signedIn();
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // daily_metrics/{YYYY-MM-DD}
+    // ------------------------------------------------------------------------
+    match /daily_metrics/{metricsDate} {
+      allow read: if signedIn();
+
+      allow create, update: if signedIn()
+        && metricsDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly(['collected', 'transactions'])
+        && request.resource.data.collected is number
+        && request.resource.data.collected >= 0
+        && request.resource.data.collected <= 1000000000
+        && request.resource.data.transactions is list
+        && request.resource.data.transactions.size() <= 10000;
+
+      // Metrics are an append-only ledger; never deleted from the client.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------------
+    // Everything else is explicitly denied.
+    // ------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

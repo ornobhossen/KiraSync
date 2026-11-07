@@ -1,0 +1,339 @@
+/* ==========================================================================
+   ROOT VARIABLES (Dark Theme Default)
+   ========================================================================== */
+:root {
+    --bg-color: #050608;
+    --text-main: #FFFFFF;
+    --text-muted: #8E8E93;
+    --accent-brass: #D4AF37; /* KiraSYCN signature brand color */
+    --success: #32D74B;
+    --border-light: rgba(255, 255, 255, 0.1);
+    
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-serif: "Georgia", serif;
+}
+
+/* ==========================================================================
+   BASE STYLES
+   ========================================================================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 600;
+}
+
+/* Remove default number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ==========================================================================
+   LAYOUT & UTILITIES
+   ========================================================================== */
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+/* Specific to Diner App (Handles iOS Safe Areas) */
+.app-container {
+    padding: max(20px, env(safe-area-inset-top)) 20px 100px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Specific to Restaurant Dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+/* ==========================================================================
+   COMPONENTS
+   ========================================================================== */
+/* Glassmorphism Cards */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 20px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Badges */
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.badge.paid {
+    background: rgba(50, 215, 75, 0.15);
+    color: var(--success);
+}
+.badge.pending {
+    background: rgba(255, 149, 0, 0.15);
+    color: #FF9500;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s ease;
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+
+.btn-primary {
+    background: var(--accent-brass);
+    color: #000;
+}
+.btn-primary:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-main);
+}
+.btn-outline:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   BOTTOM SHEET MODALS (iOS Style)
+   ========================================================================== */
+.sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 100;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.sheet-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.bottom-sheet {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    background: var(--bg-color);
+    border-radius: 24px 24px 0 0;
+    padding: 25px;
+    transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1);
+    z-index: 101;
+    border-top: 1px solid var(--border-light);
+}
+.bottom-sheet.active {
+    bottom: 0;
+}
+
+/* Desktop sizing for bottom sheets */
+@media (min-width: 600px) {
+    .bottom-sheet {
+        max-width: 450px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 24px;
+        bottom: -100%;
+        border: 1px solid var(--border-light);
+    }
+    .bottom-sheet.active {
+        bottom: 20px;
+    }
+}
+
+/* ==========================================================================
+   PRINT LAYOUT (For QR Standees)
+   ========================================================================== */
+.print-only {
+    display: none;
+}
+
+@media print {
+    @page { margin: 0; }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+        background: white !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .qr-standee-card {
+        text-align: center;
+        padding: 40px;
+        border: 2px solid #000;
+        border-radius: 20px;
+        width: 350px;
+    }
+    
+    .qr-standee-card h1 {
+        font-size: 40px;
+        margin-bottom: 5px;
+    }
+    
+    .qr-standee-card p {
+        font-size: 18px;
+        color: #333;
+    }
+}
+
+/* ==========================================================================
+   LIGHT THEME OVERRIDES (Apple iOS Aesthetic)
+   ========================================================================== */
+body.light-theme {
+    --bg-color: #F5F5F7;       /* Apple light grey */
+    --text-main: #1D1D1F;      /* Deep dark grey text */
+    --text-muted: #86868B;
+    --border-light: #D2D2D7;
+    --accent-brass: #987236;   /* Darker brass for contrast */
+}
+
+body.light-theme .glass-panel {
+    background: #FFFFFF !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    color: var(--text-main);
+}
+
+body.light-theme .bottom-sheet {
+    background: #FFFFFF !important;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+    border-color: var(--border-light);
+}
+
+body.light-theme input,
+body.light-theme input[type="text"],
+body.light-theme input[type="number"] {
+    background: #F5F5F7 !important;
+    color: #1D1D1F !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+body.light-theme input::placeholder {
+    color: var(--text-muted);
+}
+
+body.light-theme .btn-outline {
+    border: 1px solid var(--border-light);
+    color: var(--text-main);
+    background: #FFFFFF;
+}
+
+body.light-theme .btn-outline:active {
+    background: #E5E5EA;
+}
+
+body.light-theme header {
+    background: #FFFFFF !important;
+}
+
+body.light-theme .sheet-overlay {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   ANIMATIONS & TEXT EFFECTS
+   ========================================================================== */
+@keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes numberPulse {
+    0% { transform: scale(1); color: inherit; }
+    50% { transform: scale(1.15); color: var(--accent-brass); }
+    100% { transform: scale(1); color: inherit; }
+}
+
+/* Base slide-up class */
+.animate-slide-up {
+    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0; /* Starts hidden to prevent flickering */
+}
+
+/* Stagger delays for a cascading entrance effect */
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+
+/* Pulse class applied by JavaScript when numbers change */
+.metric-value {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+.metric-value.updated {
+    animation: numberPulse 0.5s cubic-bezier(0.175, 0.885, 0.32, 1);
+}
+
+/* Premium Hover Effect for Table Cards */
+.table-card-hover {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+.table-card-hover:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-brass) !important;
+    z-index: 10;
+}
+
+body.light-theme .table-card-hover:hover {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+}
