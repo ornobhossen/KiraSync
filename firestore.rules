@@ -80,7 +80,7 @@ service cloud.firestore {
                   && request.resource.data.finalTotal <= 1000000))
           && (!request.resource.data.keys().hasAny(['paymentMethod'])
               || (request.resource.data.paymentMethod is string
-                  && request.resource.data.paymentMethod.size() <= 20))
+                  && request.resource.data.paymentMethod.size() <= 40))
           && (!request.resource.data.keys().hasAny(['paymentRef'])
               || (request.resource.data.paymentRef is string
                   && request.resource.data.paymentRef.size() <= 40));
