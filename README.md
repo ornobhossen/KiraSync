@@ -7,6 +7,8 @@
 > reservations, or payments. All menus, prices, tables, guests, receipts, and
 > transactions are simulated for demonstration purposes only.
 
+**Prototype website:** https://kirasynchro.web.app
+
 A mobile-first restaurant ordering demo with a live diner view and a staff
 dashboard. Guests can join a table session, add themselves to the bill, split
 items, and "pay" individually. The restaurant view shows every table's status,
