@@ -154,7 +154,7 @@
   screens.people = function () {
     const rows = state.people.map((p) => `
       <div class="person-row" data-id="${p.id}">
-        <div class="person-row__avatar">${initials(p.name)}</div>
+        <div class="person-row__avatar">${escapeHtml(initials(p.name))}</div>
         <div class="person-row__name">${escapeHtml(p.name)}</div>
         <div class="person-row__actions">
           <button class="icon-btn" data-action="edit-person" data-id="${p.id}" aria-label="Edit name">${iconEdit()}</button>

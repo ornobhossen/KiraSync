@@ -5,13 +5,18 @@ rules_version = '2';
 // ----------------------------------------------------------------------------
 // Principles:
 //   1. Everything is denied by default.
-//   2. Every read/write requires an authenticated (anonymous) session.
-//   3. Documents may only contain the fields the app actually uses.
-//   4. Values are type-checked and length-limited to prevent abuse.
-//   5. Unknown collections are unreachable.
+//   2. Guests need an authenticated (anonymous) session to order.
+//   3. Destructive actions and revenue data require a staff account.
+//   4. Documents may only contain the fields the app actually uses.
+//   5. Values are type-checked and length-limited to prevent abuse.
+//   6. Unknown collections are unreachable.
 //
-// IMPORTANT: enable the Anonymous provider in
-// Firebase Console > Authentication > Sign-in method.
+// SETUP:
+//   - Enable Anonymous and Email/Password providers in
+//     Firebase Console > Authentication > Sign-in method.
+//   - Create staff users in Authentication.
+//   - Create one document per staff user at staff/{uid}. The client can read
+//     its own staff document but can never write to the staff collection.
 // ============================================================================
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -21,6 +26,12 @@ service cloud.firestore {
     // ------------------------------------------------------------------------
     function signedIn() {
       return request.auth != null;
+    }
+
+    // Staff membership is proven by a manually-created staff/{uid} document.
+    function isStaff() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
     }
 
     function validId(id) {
@@ -46,6 +57,7 @@ service cloud.firestore {
         && request.resource.data.status in [
              'Available', 'Ordering', 'Seated', 'Payment Pending', 'Fully Paid', 'Paid', 'Cleaning'
            ]
+        && (isStaff() || request.resource.data.status == 'Ordering')
         && request.resource.data.updatedAt is string
         && request.resource.data.updatedAt.size() <= 40;
 
@@ -85,8 +97,8 @@ service cloud.firestore {
               || (request.resource.data.paymentRef is string
                   && request.resource.data.paymentRef.size() <= 40));
 
-        // resetTable() clears diners between groups.
-        allow delete: if signedIn();
+        // Only staff may clear diners between groups.
+        allow delete: if isStaff();
       }
 
       // ----------------------------------------------------------------------
@@ -112,18 +124,29 @@ service cloud.firestore {
           && request.resource.data.sharedBy.size() <= 50
           && request.resource.data.status in ['Pending', 'Preparing', 'Served', 'Cancelled', 'Paid'];
 
-        // resetTable() clears orders between groups.
-        allow delete: if signedIn();
+        // Only staff may clear orders between groups.
+        allow delete: if isStaff();
       }
     }
 
     // ------------------------------------------------------------------------
+    // staff/{staffId}
+    // The client may read its own membership document so it can confirm
+    // access. Membership is managed manually in the Firebase Console.
+    // ------------------------------------------------------------------------
+    match /staff/{staffId} {
+      allow read: if signedIn() && request.auth.uid == staffId;
+      allow write: if false;
+    }
+
+    // ------------------------------------------------------------------------
     // daily_metrics/{YYYY-MM-DD}
+    // Revenue is staff-only. Diners must never read or manipulate the ledger.
     // ------------------------------------------------------------------------
     match /daily_metrics/{metricsDate} {
-      allow read: if signedIn();
+      allow read: if isStaff();
 
-      allow create, update: if signedIn()
+      allow create, update: if isStaff()
         && metricsDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && request.resource.data.keys().hasOnly(['collected', 'transactions'])
         && request.resource.data.collected is number

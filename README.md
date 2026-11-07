@@ -9,29 +9,33 @@
 
 **Prototype website:** https://kirasynchro.web.app
 
-A mobile-first restaurant ordering demo with a live diner view and a staff
-dashboard. Guests can join a table session, add themselves to the bill, split
-items, and "pay" individually. The restaurant view shows every table's status,
+A mobile-first restaurant ordering demo with a live diner view and a protected
+staff dashboard. Guests can join a table session, add themselves to the bill,
+split items, and "pay" individually. Staff sign in to see every table's status,
 orders, and a daily revenue ledger in real time.
 
 ## Features
 
 - **Diner flow** — join a table, add guests, assign menu items to one or more
   diners, split the bill per person, and generate a demo e-receipt.
-- **Restaurant dashboard** — live table statuses, diner/order breakdown, daily
-  revenue and transaction history, and a table reset action.
+- **Protected staff dashboard** — email/password sign-in, live table statuses,
+  diner/order breakdown, daily revenue and transaction history, and a table
+  reset action.
 - **Live sync** — Firestore `onSnapshot` listeners keep every open client in
   sync without polling.
 - **Per-document writes** — each diner and order is its own document, so
   concurrent guests do not overwrite each other.
 - **Hardened backend** — deny-by-default Firestore rules, required
-  authentication, field validation, and optional App Check.
+  authentication, staff-only destructive actions, field validation, and
+  optional App Check.
+- **Browser hardening** — strict Content Security Policy, no inline scripts or
+  inline event handlers, and all untrusted data is escaped before rendering.
 
 ## Tech stack
 
 - HTML, CSS, and vanilla JavaScript (ES modules)
 - Firebase Firestore (real-time database)
-- Firebase Authentication (anonymous sessions)
+- Firebase Authentication (anonymous diners + email/password staff)
 - Firebase Hosting
 - Optional: Firebase App Check with reCAPTCHA v3
 
@@ -41,15 +45,18 @@ orders, and a daily revenue ledger in real time.
 .
 ├── index.html                  # Landing / entry page
 ├── diner.html                  # Guest ordering and payment demo
-├── restaurant.html             # Staff dashboard
-├── script.js                   # Shared UI logic and demo data
+├── restaurant.html             # Staff sign-in + dashboard
+├── script.js                   # Landing-page UI logic and demo data
+├── diner.js                    # Diner page logic
+├── restaurant.js               # Staff dashboard logic
+├── theme-init.js               # Pre-paint theme script for the landing page
 ├── style.css                   # Main styles
 ├── app.css                     # App-specific styles
 ├── firebase-sync.js            # Firebase init + Firestore data layer
 ├── firebase-config.example.js  # Safe template for local config
 ├── firebase-config.js          # Local config (git-ignored, create it yourself)
 ├── firestore.rules             # Security rules (deploy these)
-├── firebase.json               # Firebase Hosting + Firestore config
+├── firebase.json               # Hosting headers + Firestore config
 └── .firebaserc                 # Firebase project alias
 ```
 
@@ -70,18 +77,40 @@ Open `firebase-config.js` and fill in the values from:
 
 > `firebase-config.js` is listed in `.gitignore`. Never commit it.
 
-### 2. Enable Anonymous Authentication
+### 2. Enable the authentication providers
 
-**Firebase Console → Authentication → Sign-in method → Anonymous → Enable**
+In **Firebase Console → Authentication → Sign-in method**, enable:
 
-The app signs in anonymously on load, and the security rules reject any request
-without an authenticated session.
+- **Anonymous** — used by diners, so they can order without creating an account.
+- **Email/Password** — used by staff to open the dashboard.
 
-### 3. Create the Firestore database
+The security rules reject any request without an authenticated session.
+
+### 3. Create a staff account
+
+1. In **Authentication → Users**, add an email/password user for each staff
+   member.
+2. Copy that user's **UID**.
+3. In **Firestore Database**, create a document at `staff/{UID}`. Its contents
+   do not matter; its existence is the access grant. For example:
+
+   ```
+   staff/
+     └── <STAFF_UID>/
+           └── (any field, e.g. role: "manager")
+   ```
+
+   Create this document manually in the console. The client can read its own
+   `staff/{uid}` document but can never create or modify staff membership.
+
+### 4. Create the Firestore database
 
 **Firebase Console → Firestore Database → Create database** (production mode).
 
-### 4. Deploy the security rules
+### 5. Deploy the security rules
+
+Staff sign-in works by reading `staff/{uid}`, so deploy the rules before
+testing the dashboard.
 
 ```bash
 npm install -g firebase-tools
@@ -89,7 +118,7 @@ firebase login
 firebase deploy --only firestore:rules
 ```
 
-### 5. Serve locally
+### 6. Serve locally
 
 Because the app uses ES modules, open it through a local server rather than
 `file://`:
@@ -105,7 +134,7 @@ Then visit `http://localhost:8080`.
 ## Deployment
 
 The `.firebaserc` file already points at the `kirasynchro` project. To deploy
-the site and rules:
+the site, headers, and rules:
 
 ```bash
 firebase deploy
@@ -114,6 +143,15 @@ firebase deploy
 Hosting serves the current folder (`"public": "."` in `firebase.json`).
 `firebase-config.js` is deployed with the site because the browser needs it —
 it is only kept out of Git.
+
+`firebase.json` adds these response headers to every route:
+
+- **Content-Security-Policy** — only self-hosted code, the Firebase SDK, Google
+  Fonts, and the QR image service may load. Inline scripts, `eval`, plugins, and
+  framing are blocked.
+- **Strict-Transport-Security**, **X-Content-Type-Options**,
+  **X-Frame-Options**, **Referrer-Policy**, **Permissions-Policy**, and
+  **Cross-Origin-Opener-Policy**.
 
 ## Security model
 
@@ -127,19 +165,23 @@ What this project does instead:
 
 1. **Config stays out of Git** — `firebase-config.js` is git-ignored, and the
    repository history was rewritten so the key is not stored there.
-2. **Deny by default** — unknown collections are inaccessible, and destructive
-   operations are limited to what the app actually needs.
+2. **Deny by default** — unknown collections are inaccessible, and every rule
+   is explicit about what it allows.
 3. **Authentication required** — every read and write requires
-   `request.auth != null`. The app uses anonymous auth so there is no login
-   screen.
-4. **Strict validation** — rules whitelist field names, check types, enforce
+   `request.auth != null`.
+4. **Staff authorization** — deleting data, resetting tables, and reading or
+   writing `daily_metrics` require a signed-in user with a matching
+   `staff/{uid}` document. Anonymous diners cannot reach those operations.
+5. **Strict validation** — rules whitelist field names, check types, enforce
    document IDs, and limit string/list sizes. Oversized or malformed writes are
    rejected.
-5. **App Check (recommended)** — set `appCheckSiteKey` in
+6. **XSS hardening** — no inline `<script>` blocks or `on*` attributes; all
+   Firestore and URL-derived values are escaped or validated before rendering.
+7. **App Check (recommended)** — set `appCheckSiteKey` in
    `firebase-config.js`, register the app in Firebase App Check with reCAPTCHA
    v3, then enforce App Check for Firestore. This blocks traffic that does not
    come from your registered sites.
-6. **API key restrictions (do this)** — in **Google Cloud Console → APIs &
+8. **API key restrictions (do this)** — in **Google Cloud Console → APIs &
    Services → Credentials**, edit the Firebase browser key:
    - **Application restrictions → HTTP referrers**:
      - `https://kirasynchro.web.app/*`
@@ -157,20 +199,25 @@ What this project does instead:
 
 | Path | Read | Write |
 | --- | --- | --- |
-| `tables/{tableId}` | Authenticated | Create/update with a valid status and timestamps only |
-| `tables/{tableId}/diners/{dinerId}` | Authenticated | Create/update with validated diner fields; delete allowed for table reset |
-| `tables/{tableId}/orders/{orderId}` | Authenticated | Create/update with validated order fields; delete allowed for table reset |
-| `daily_metrics/{YYYY-MM-DD}` | Authenticated | Append/update revenue totals only; no deletes |
+| `tables/{tableId}` | Authenticated | Diners may only set `Ordering`; staff may set any valid status |
+| `tables/{tableId}/diners/{dinerId}` | Authenticated | Create/update with validated fields; delete is staff-only |
+| `tables/{tableId}/orders/{orderId}` | Authenticated | Create/update with validated fields; delete is staff-only |
+| `staff/{staffId}` | Only the signed-in user's own document | Denied (managed manually in the console) |
+| `daily_metrics/{YYYY-MM-DD}` | Staff only | Staff only; no deletes |
 | Anything else | Denied | Denied |
 
 ### Limitations
 
 - Anonymous authentication proves a client is genuine, not that it is a
-  specific diner or staff member. Anyone who loads the demo site can read and
-  write demo data, subject to the rules above. A real product would add staff
-  accounts, custom claims, and per-user ownership.
+  specific diner. Any visitor who loads the demo can read demo table data and
+  place demo orders, subject to the rules above. They cannot delete data, reset
+  tables, or read revenue.
 - The "payments" in this project are simulated in the browser. No payment
   provider is integrated, and no real money moves.
+- The Firebase web API key is visible in the browser by design. Restrict it in
+  Google Cloud and enable App Check as described above.
+- Staff membership is managed manually in the Firebase Console. A production
+  system would use custom claims and an admin workflow.
 
 ## Disclaimer
 
