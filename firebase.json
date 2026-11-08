@@ -4,6 +4,9 @@
     "cleanUrls": true,
     "ignore": [
       "firebase.json",
+      "firestore.rules",
+      "firebase-config.example.js",
+      "*.md",
       "**/.*",
       "**/node_modules/**"
     ],

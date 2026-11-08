@@ -130,6 +130,22 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------------------
+    // Collection group reads
+    // The staff dashboard listens to every table's diners and orders at once.
+    // Firestore only authorises collection group queries through a rule that
+    // matches the collection at any path, so these grant read-only access to
+    // signed-in clients. All writes and deletes stay governed by the nested
+    // rules above.
+    // ------------------------------------------------------------------------
+    match /{path=**}/diners/{dinerId} {
+      allow read: if signedIn();
+    }
+
+    match /{path=**}/orders/{orderId} {
+      allow read: if signedIn();
+    }
+
+    // ------------------------------------------------------------------------
     // staff/{staffId}
     // The client may read its own membership document so it can confirm
     // access. Membership is managed manually in the Firebase Console.
