@@ -186,7 +186,7 @@ What this project does instead:
    - **Application restrictions → HTTP referrers**:
      - `https://kirasynchro.web.app/*`
      - `https://kirasynchro.firebaseapp.com/*`
-     - `http://localhost/*` (local development)
+     - `http://localhost/*`, `http://localhost:8080/*`, `http://127.0.0.1/*`, `http://127.0.0.1:8080/*` (local development)
    - **API restrictions → Restrict key**: allow only
      - Identity Toolkit API (Firebase Auth)
      - Cloud Firestore API
@@ -203,6 +203,7 @@ What this project does instead:
 | `tables/{tableId}/diners/{dinerId}` | Authenticated | Create/update with validated fields; delete is staff-only |
 | `tables/{tableId}/orders/{orderId}` | Authenticated | Create/update with validated fields; delete is staff-only |
 | `staff/{staffId}` | Only the signed-in user's own document | Denied (managed manually in the console) |
+| Collection-group `diners` / `orders` | Staff only | Denied |
 | `daily_metrics/{YYYY-MM-DD}` | Staff only | Staff only; no deletes |
 | Anything else | Denied | Denied |
 

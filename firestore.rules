@@ -134,15 +134,15 @@ service cloud.firestore {
     // The staff dashboard listens to every table's diners and orders at once.
     // Firestore only authorises collection group queries through a rule that
     // matches the collection at any path, so these grant read-only access to
-    // signed-in clients. All writes and deletes stay governed by the nested
-    // rules above.
+    // staff. Diners read a single table through the nested rules above, so an
+    // anonymous session cannot enumerate every table in one query.
     // ------------------------------------------------------------------------
     match /{path=**}/diners/{dinerId} {
-      allow read: if signedIn();
+      allow read: if isStaff();
     }
 
     match /{path=**}/orders/{orderId} {
-      allow read: if signedIn();
+      allow read: if isStaff();
     }
 
     // ------------------------------------------------------------------------
