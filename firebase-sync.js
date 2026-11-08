@@ -1,7 +1,7 @@
 // IMPORT FIREBASE v10 MODULAR SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app-check.js";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app-check.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, collectionGroup, getDocs, deleteDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
 // The config is kept in a git-ignored local file.
@@ -13,11 +13,12 @@ import { firebaseConfig } from "./firebase-config.js";
    ========================================================================== */
 const app = initializeApp(firebaseConfig);
 
-// App Check is optional but recommended. Set appCheckSiteKey in
-// firebase-config.js, then enforce App Check for Firestore in the console.
+// App Check attests that requests come from the registered KiraSync site.
+// The score-based reCAPTCHA Enterprise key is public and safe to expose.
+// Set appCheckSiteKey in firebase-config.js to enable it.
 if (firebaseConfig.appCheckSiteKey) {
     initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(firebaseConfig.appCheckSiteKey),
+        provider: new ReCaptchaEnterpriseProvider(firebaseConfig.appCheckSiteKey),
         isTokenAutoRefreshEnabled: true
     });
 }

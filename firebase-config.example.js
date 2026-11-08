@@ -16,8 +16,9 @@ export const firebaseConfig = {
   projectId: "YOUR_PROJECT_ID",
   storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  appId: "YOUR_APP_ID",
 
-  // Optional: reCAPTCHA v3 site key for App Check (safe to expose).
-  // appCheckSiteKey: "YOUR_RECAPTCHA_V3_SITE_KEY"
+  // Optional: score-based reCAPTCHA Enterprise site key for App Check
+  // (public, safe to expose). Register the key in Firebase App Check first.
+  // appCheckSiteKey: "YOUR_RECAPTCHA_ENTERPRISE_SITE_KEY"
 };

@@ -27,7 +27,7 @@ orders, and a daily revenue ledger in real time.
   concurrent guests do not overwrite each other.
 - **Hardened backend** — deny-by-default Firestore rules, required
   authentication, staff-only destructive actions, field validation, and
-  optional App Check.
+  enforced App Check with reCAPTCHA Enterprise.
 - **Browser hardening** — strict Content Security Policy, no inline scripts or
   inline event handlers, and all untrusted data is escaped before rendering.
 
@@ -36,8 +36,8 @@ orders, and a daily revenue ledger in real time.
 - HTML, CSS, and vanilla JavaScript (ES modules)
 - Firebase Firestore (real-time database)
 - Firebase Authentication (anonymous diners + email/password staff)
+- Firebase App Check (reCAPTCHA Enterprise, enforced for Firestore)
 - Firebase Hosting
-- Optional: Firebase App Check with reCAPTCHA v3
 
 ## Project structure
 
@@ -144,6 +144,22 @@ Hosting serves the current folder (`"public": "."` in `firebase.json`).
 `firebase-config.js` is deployed with the site because the browser needs it —
 it is only kept out of Git.
 
+### App Check
+
+The live site uses **App Check with reCAPTCHA Enterprise** and Firestore
+enforcement is on. To reproduce it:
+
+1. In **Google Cloud Console → Fraud Defense**, create a score-based **Web**
+   key for `kirasynchro.web.app` (and `kirasynchro.firebaseapp.com`).
+2. In **Firebase Console → App Check → Apps**, register the web app with the
+   **reCAPTCHA Enterprise** provider and paste the site key.
+3. Put the same site key in `firebase-config.js` as `appCheckSiteKey`.
+4. Deploy the site, then enable **App Check enforcement** for Cloud Firestore.
+
+For local development, App Check will reject `localhost` because it is not in
+the key's domain list. Use the App Check debug provider and register the debug
+token in the console, or temporarily keep enforcement off while developing.
+
 `firebase.json` adds these response headers to every route:
 
 - **Content-Security-Policy** — only self-hosted code, the Firebase SDK, Google
@@ -177,10 +193,10 @@ What this project does instead:
    rejected.
 6. **XSS hardening** — no inline `<script>` blocks or `on*` attributes; all
    Firestore and URL-derived values are escaped or validated before rendering.
-7. **App Check (recommended)** — set `appCheckSiteKey` in
-   `firebase-config.js`, register the app in Firebase App Check with reCAPTCHA
-   v3, then enforce App Check for Firestore. This blocks traffic that does not
-   come from your registered sites.
+7. **App Check (enforced)** — the app initialises App Check with a score-based
+   reCAPTCHA Enterprise key and Firestore enforcement is switched on, so
+   requests that do not carry a valid App Check token are rejected before the
+   rules run. The key is public; the protection comes from the attestation.
 8. **API key restrictions (do this)** — in **Google Cloud Console → APIs &
    Services → Credentials**, edit the Firebase browser key:
    - **Application restrictions → HTTP referrers**:
@@ -215,8 +231,9 @@ What this project does instead:
   tables, or read revenue.
 - The "payments" in this project are simulated in the browser. No payment
   provider is integrated, and no real money moves.
-- The Firebase web API key is visible in the browser by design. Restrict it in
-  Google Cloud and enable App Check as described above.
+- The Firebase web API key is visible in the browser by design. It is restricted
+  in Google Cloud, and App Check (reCAPTCHA Enterprise) is enforced for
+  Firestore.
 - Staff membership is managed manually in the Firebase Console. A production
   system would use custom claims and an admin workflow.
 

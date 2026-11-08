@@ -47,12 +47,55 @@
             font-size: 13px;
             color: #FF453A;
         }
+        .staff-login__brand {
+            position: absolute;
+            top: 22px;
+            left: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+        .staff-login__brand:hover {
+            opacity: 0.75;
+        }
+        .staff-login__mark {
+            display: flex;
+            color: var(--accent-brass);
+        }
+        .staff-login__word {
+            font-family: var(--font-serif);
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .staff-login__word em {
+            font-style: normal;
+            color: var(--accent-brass);
+        }
+        @media (max-width: 480px) {
+            .staff-login__brand {
+                top: 16px;
+                left: 16px;
+            }
+        }
     </style>
 </head>
 <body style="background-color: var(--bg-color, #050608);">
 
     <!-- STAFF SIGN-IN GATE -->
     <div class="staff-login no-print" id="staffLogin">
+        <a class="staff-login__brand" href="/" title="Back to the KiraSYCN home page" aria-label="Back to the KiraSYCN home page">
+            <span class="staff-login__mark" aria-hidden="true">
+                <svg viewBox="0 0 40 40" width="28" height="28">
+                    <path d="M8 4 L8 36 M8 20 L28 4 M8 20 L28 36" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="32" cy="20" r="3" fill="currentColor"/>
+                </svg>
+            </span>
+            <span class="staff-login__word">Kira<em>SYCN</em></span>
+        </a>
         <form class="glass-panel" id="staffLoginForm">
             <h2 style="margin-bottom: 6px;">Staff sign in</h2>
             <p class="text-muted" style="margin-bottom: 20px; font-size: 14px;">The restaurant dashboard requires a staff account.</p>
